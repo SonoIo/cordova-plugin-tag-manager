@@ -1,4 +1,4 @@
-(function () {
+cordova.define("com.jareddickson.cordova.tag-manager.TagManager", function(require, exports, module) { (function () {
     var cordovaRef = window.PhoneGap || window.cordova || window.Cordova;
     var queue = [];
     var runInterval = 1000;
@@ -28,9 +28,24 @@
 
     // log an event
     //
+    // data =
+    TagManager.prototype.track = function (success, fail, data) {
+        if ( typeof data !== "object" ) data = {};
+        var timestamp = new Date().getTime();
+        queue.push({
+            timestamp: timestamp,
+            method: 'track',
+            success: success,
+            fail: fail,
+            data: data
+        });
+    };
+
+    // log an event
+    //
     // category = The event category. This parameter is required to be non-empty.
     // eventAction = The event action. This parameter is required to be non-empty.
-    // eventLabel = The event label. This parameter may be a blank string to indicate no label.    
+    // eventLabel = The event label. This parameter may be a blank string to indicate no label.
     // eventValue = The event value. This parameter may be -1 to indicate no value.
     TagManager.prototype.trackEvent = function (success, fail, category, eventAction, eventLabel, eventValue) {
         var timestamp = new Date().getTime();
@@ -79,7 +94,7 @@
             method: 'exitGTM',
             success: success,
             fail: fail
-        });        
+        });
     };
 
     if (cordovaRef && cordovaRef.addConstructor) {
@@ -94,15 +109,18 @@
             window.plugins = {};
         }
         if (!window.plugins.TagManager) {
-            window.plugins.TagManager = new TagManager();            
+            window.plugins.TagManager = new TagManager();
         }
     }
 
-    function run() {        
+    function run() {
         if (queue.length > 0) {
             var item = queue.shift();
             if (item.method === 'initGTM') {
                 cordovaRef.exec(item.success, item.fail, 'TagManager', item.method, [item.id, item.period]);
+            }
+            else if (item.method === 'track') {
+                cordovaRef.exec(item.success, item.fail, 'TagManager', item.method, [item.data]);
             }
             else if (item.method === 'trackEvent') {
                 cordovaRef.exec(item.success, item.fail, 'TagManager', item.method, [item.category, item.eventAction, item.eventLabel, item.eventValue]);
@@ -126,3 +144,4 @@
     }
 })();
 /* End of Temporary Scope. */
+});
